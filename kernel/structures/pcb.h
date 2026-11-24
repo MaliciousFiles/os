@@ -20,6 +20,7 @@
 #include "lib/shared.h"
 #include "async/spin_lock.h"
 #include "machine/user_context.h"
+#include "syscall.h"
 #include "system_main.h"
 #include <cstdint>
 
@@ -28,6 +29,7 @@
 #include "async/event.h"
 #include "io/console.h"
 #include "memory/vmm.h"
+#include "structures/poll.h"
 
 namespace impl
 {
@@ -35,17 +37,21 @@ class AddressSpace;
 struct TCB;
 bool current_thread_dead();
 
-enum FileType { SEEKING, CONSOLE, PIPE };
+enum FileType { SEEKING, CONSOLE, PIPE, SOCKET, EVENTFD, EPOLL };
 
 class SeekingFile;
 
 class OpenFile {
 protected:
-    OpenFile(FileType type, bool rd, bool wr) : rd(rd), wr(wr), type(type) {}
+    OpenFile(FileType type, bool rd, bool wr, uint32_t flags = 0) : rd(rd), wr(wr), file_flags(flags), type(type) {}
 
 public:
     const bool rd;
     const bool wr;
+    Atomic<uint32_t> file_flags;
+
+    virtual uint32_t poll_mask() { return POLLIN | POLLOUT; }
+    bool is_nonblocking() const { return file_flags & Syscall::O_NONBLOCK; }
 
     virtual ~OpenFile() = default;
 
