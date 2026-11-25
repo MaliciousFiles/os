@@ -24,6 +24,7 @@
 #include "memory/physmem.h"
 #include "async/sync.h"
 #include "machine/x86_64.h"
+#include "net/socket_syscalls.h"
 
 #include <utility>
 
@@ -281,6 +282,7 @@ sync<uint64_t> dispatch(TCB *t) {
     if (!file->rd) co_return Syscall::EBADF;
 
     if (file->type == impl::PIPE) co_return co_await file->read(buf, len); // copies out transactionally
+    if (file->type == impl::SOCKET) co_return co_await Net::socket_read(file, buf, len);
     co_return co_await buffered_io(file.operator->(), buf, len, false);
   }
   case Syscall::WRITE: {
@@ -300,7 +302,47 @@ sync<uint64_t> dispatch(TCB *t) {
     if (file == nullptr) co_return Syscall::EBADF;
     if (!file->wr) co_return Syscall::EBADF;
 
+    if (file->type == impl::SOCKET) co_return co_await Net::socket_write(file, buf, len);
     co_return co_await buffered_io(file.operator->(), buf, len, true);
+  }
+  case Syscall::SOCKET:
+  case Syscall::SOCKETPAIR:
+  case Syscall::BIND:
+  case Syscall::LISTEN:
+  case Syscall::ACCEPT:
+  case Syscall::ACCEPT4:
+  case Syscall::CONNECT:
+  case Syscall::SENDTO:
+  case Syscall::RECVFROM:
+  case Syscall::SHUTDOWN:
+  case Syscall::GETSOCKNAME:
+  case Syscall::GETPEERNAME:
+  case Syscall::SETSOCKOPT:
+  case Syscall::GETSOCKOPT:
+    co_return co_await Net::socket_syscall(t);
+  case Syscall::FCNTL: {
+    // fcntl(fd, cmd, arg): the close-on-exec flag and O_NONBLOCK
+    uint64_t fd = c.rdi;
+    uint64_t arg = c.rdx;
+    auto file = t->process->fd_table.get(fd);
+    if (file == nullptr) co_return Syscall::EBADF;
+    switch (c.rsi) {
+    case Syscall::F_GETFD: {
+      int64_t cloexec = t->process->fd_table.get_cloexec(fd);
+      co_return cloexec < 0 ? cloexec : (cloexec ? Syscall::FD_CLOEXEC : 0);
+    }
+    case Syscall::F_SETFD: co_return t->process->fd_table.set_cloexec(fd, arg & Syscall::FD_CLOEXEC);
+    case Syscall::F_GETFL: {
+      uint64_t flags = file->rd && file->wr ? Syscall::O_RDWR : file->wr ? Syscall::O_WRONLY : Syscall::O_RDONLY;
+      if (file->is_nonblocking()) flags |= Syscall::O_NONBLOCK;
+      co_return flags;
+    }
+    case Syscall::F_SETFL:
+      // only O_NONBLOCK changes (the access mode can't, O_APPEND isn't supported here yet)
+      file->set_nonblocking(arg & Syscall::O_NONBLOCK);
+      co_return 0;
+    default: co_return Syscall::EINVAL;
+    }
   }
   case Syscall::SCHED_YIELD: {
     co_await yield();

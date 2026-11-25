@@ -19,7 +19,7 @@ LDFLAGS = -static -nostdlib -no-pie -s -Wl,--build-id=none \
 
 LIBC = $(wildcard libc/*.c libc/*.S)
 TESTING = $(wildcard testing/*.S)
-HEADERS = $(wildcard libc/include/*.h libc/include/sys/*.h testing/*.h)
+HEADERS = $(wildcard libc/include/*.h libc/include/*/*.h testing/*.h)
 
 # every test directory with a src/ in it
 INITS = $(patsubst %/src,%/sbin/init,$(wildcard ../*.dir/src))

@@ -44,6 +44,22 @@ constexpr uint64_t ALARM = 37;
 constexpr uint64_t KILL = 62;
 constexpr uint64_t SCHED_YIELD = 24; // sched_yield(), always blocks
 constexpr uint64_t GETPID = 39;      // getpid()
+// sockets (net/socket_syscalls.cc)
+constexpr uint64_t SOCKET = 41;      // socket(domain, type, protocol)
+constexpr uint64_t CONNECT = 42;     // connect(fd, addr, addrlen)
+constexpr uint64_t ACCEPT = 43;      // accept(fd, addr, addrlen)
+constexpr uint64_t SENDTO = 44;      // sendto(fd, buf, len, flags, addr, addrlen)
+constexpr uint64_t RECVFROM = 45;    // recvfrom(fd, buf, len, flags, addr, addrlen)
+constexpr uint64_t SHUTDOWN = 48;    // shutdown(fd, how)
+constexpr uint64_t BIND = 49;        // bind(fd, addr, addrlen)
+constexpr uint64_t LISTEN = 50;      // listen(fd, backlog)
+constexpr uint64_t GETSOCKNAME = 51; // getsockname(fd, addr, addrlen)
+constexpr uint64_t GETPEERNAME = 52; // getpeername(fd, addr, addrlen)
+constexpr uint64_t SOCKETPAIR = 53;  // socketpair(domain, type, protocol, sv[2])
+constexpr uint64_t SETSOCKOPT = 54;  // setsockopt(fd, level, name, value, len)
+constexpr uint64_t GETSOCKOPT = 55;  // getsockopt(fd, level, name, value, len*)
+constexpr uint64_t FCNTL = 72;       // fcntl(fd, cmd, arg): F_GETFD/F_SETFD/F_GETFL/F_SETFL
+constexpr uint64_t ACCEPT4 = 288;    // accept4(fd, addr, addrlen, flags)
 constexpr uint64_t FORK = 57;        // fork(), the direct system call
 constexpr uint64_t EXECVE = 59;      // execve(path, argv, envp)
 constexpr uint64_t EXIT = 60;        // exit(code), the calling thread
@@ -84,6 +100,13 @@ constexpr uint64_t O_NOFOLLOW   = 00400000;
 constexpr uint64_t O_NOATIME    = 01000000;
 constexpr uint64_t O_CLOEXEC    = 02000000;
 
+// fcntl's commands and descriptor flags (Linux's values)
+constexpr uint64_t F_GETFD = 1;
+constexpr uint64_t F_SETFD = 2;
+constexpr uint64_t F_GETFL = 3;
+constexpr uint64_t F_SETFL = 4;
+constexpr uint64_t FD_CLOEXEC = 1;
+
 // openat/execveat's flags (Linux's values)
 constexpr uint64_t AT_FDCWD = -100;
 constexpr uint64_t AT_SYMLINK_NOFOLLOW = 0x100;
@@ -114,9 +137,11 @@ constexpr uint64_t CLONE_CHILD_CLEARTID = 0x200000;
 // error results
 constexpr int64_t ENOENT = -2;
 constexpr int64_t ESRCH = -3;
+constexpr int64_t EINTR = -4;
 constexpr int64_t EBADF = -9;
 constexpr int64_t ECHILD = -10;
 constexpr int64_t EAGAIN = -11;
+constexpr int64_t ENOMEM = -12;
 constexpr int64_t EACCES = -13;
 constexpr int64_t EFAULT = -14;
 constexpr int64_t EEXIST = -17;
@@ -133,6 +158,27 @@ constexpr int64_t ENAMETOOLONG = -36;
 constexpr int64_t ENOSYS = -38;
 constexpr int64_t ELOOP = -40;
 constexpr int64_t EOVERFLOW = -75;
+// networking
+constexpr int64_t ENOTSOCK = -88;
+constexpr int64_t EDESTADDRREQ = -89;
+constexpr int64_t EMSGSIZE = -90;
+constexpr int64_t EPROTOTYPE = -91;
+constexpr int64_t ENOPROTOOPT = -92;
+constexpr int64_t EPROTONOSUPPORT = -93;
+constexpr int64_t EOPNOTSUPP = -95;
+constexpr int64_t EAFNOSUPPORT = -97;
+constexpr int64_t EADDRINUSE = -98;
+constexpr int64_t EADDRNOTAVAIL = -99;
+constexpr int64_t ENETUNREACH = -101;
+constexpr int64_t ECONNABORTED = -103;
+constexpr int64_t ECONNRESET = -104;
+constexpr int64_t EISCONN = -106;
+constexpr int64_t ENOTCONN = -107;
+constexpr int64_t ETIMEDOUT = -110;
+constexpr int64_t ECONNREFUSED = -111;
+constexpr int64_t EHOSTUNREACH = -113;
+constexpr int64_t EALREADY = -114;
+constexpr int64_t EINPROGRESS = -115;
 
 constexpr uint64_t RUSAGE_STRUCT_SIZE = 152;
 

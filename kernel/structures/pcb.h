@@ -27,6 +27,7 @@
 #include "ccb.h"
 #include "elf.h"
 #include "async/event.h"
+#include "async/poll_queue.h"
 #include "io/console.h"
 #include "memory/vmm.h"
 #include "structures/poll.h"
@@ -37,11 +38,17 @@ class AddressSpace;
 struct TCB;
 bool current_thread_dead();
 
+<<<<<<< Updated upstream
 enum FileType { SEEKING, CONSOLE, PIPE, SOCKET, EVENTFD, EPOLL };
+=======
+enum FileType { SEEKING, CONSOLE, PIPE, SOCKET, EPOLL, EVENTFD };
+>>>>>>> Stashed changes
 
 class SeekingFile;
 
 class OpenFile {
+    bool nonblocking = false; // O_NONBLOCK: on the open file, shared by dup'd fds
+
 protected:
     OpenFile(FileType type, bool rd, bool wr, uint32_t flags = 0) : rd(rd), wr(wr), file_flags(flags), type(type) {}
 
@@ -56,6 +63,14 @@ public:
     virtual ~OpenFile() = default;
 
     const FileType type;
+
+    // Readiness for poll/epoll (async/poll_queue.h). A file whose readiness
+    // can change overrides poll_mask and calls poll_queue.notify on changes.
+    PollQueue poll_queue;
+    virtual uint32_t poll_mask() { return Poll::IN | Poll::RDNORM | Poll::OUT | Poll::WRNORM; }
+
+    bool is_nonblocking() const { return __atomic_load_n(&nonblocking, __ATOMIC_ACQUIRE); }
+    void set_nonblocking(bool on) { __atomic_store_n(&nonblocking, on, __ATOMIC_RELEASE); }
 
     SeekingFile* seeking() { return type == SEEKING ? (SeekingFile*)this : nullptr; }
     virtual sync<uint64_t> read(char *buf, uint64_t len);
@@ -406,6 +421,19 @@ struct FileDescriptorTable {
         LockGuard g{lock};
         if (fd >= capacity || is_free(fd)) return {};
         return table[fd].file;
+    }
+
+    // fcntl's F_GETFD / F_SETFD: 1 or 0, or EBADF
+    int64_t get_cloexec(uint64_t fd) {
+        LockGuard g{lock};
+        if (fd >= capacity || is_free(fd)) return Syscall::EBADF;
+        return table[fd].close_on_exec;
+    }
+    int64_t set_cloexec(uint64_t fd, bool cloexec) {
+        LockGuard g{lock};
+        if (fd >= capacity || is_free(fd)) return Syscall::EBADF;
+        table[fd].close_on_exec = cloexec;
+        return 0;
     }
 
     void do_close(uint64_t fd) {

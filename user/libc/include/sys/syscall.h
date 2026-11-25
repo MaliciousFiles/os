@@ -28,10 +28,24 @@
 #define SYS_nanosleep 35
 #define SYS_alarm 37
 #define SYS_getpid 39
+#define SYS_socket 41
+#define SYS_connect 42
+#define SYS_accept 43
+#define SYS_sendto 44
+#define SYS_recvfrom 45
+#define SYS_shutdown 48
+#define SYS_bind 49
+#define SYS_listen 50
+#define SYS_getsockname 51
+#define SYS_getpeername 52
+#define SYS_socketpair 53
+#define SYS_setsockopt 54
+#define SYS_getsockopt 55
 #define SYS_fork 57
 #define SYS_execve 59
 #define SYS_exit 60        // ends the calling thread
 #define SYS_wait4 61
+#define SYS_fcntl 72
 #define SYS_kill 62
 #define SYS_getcwd 79
 #define SYS_chdir 80
@@ -43,5 +57,6 @@
 #define SYS_openat 257
 #define SYS_dup3 292
 #define SYS_pipe2 293
+#define SYS_accept4 288
 #define SYS_execveat 322
 #define SYS_clone3 435
