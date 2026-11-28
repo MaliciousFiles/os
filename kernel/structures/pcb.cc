@@ -29,6 +29,11 @@
 static_assert(offsetof(impl::TCB, context) == 0);
 
 namespace impl {
+
+// Defaults for files that do not support read or write. Defining them here
+// also gives OpenFile its vtable (read is its key function).
+sync<uint64_t> OpenFile::read(char *, uint64_t) { co_return Syscall::EINVAL; }
+sync<uint64_t> OpenFile::write(char *, uint64_t) { co_return Syscall::EINVAL; }
 bool current_thread_dead() {
     auto *t = CCB::current()->current_thread;
     return t && t->zombie;
